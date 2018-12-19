@@ -8,13 +8,14 @@ import socket
 import cPickle as pickle
 from time import sleep
 
+
 GPIO.setmode(GPIO.BCM)
 
 #define the pins that goes to the circuit
 photosensor_pin = 7
 
 #process that always checks the state of the photosensor and eventually count
-def runCounter(photosensor_pin, lock):
+def runCounter(photosensor_pin, lock, file_event):
     camera = PiCamera()
     #update pid value
     lock.acquire()
@@ -32,54 +33,72 @@ def runCounter(photosensor_pin, lock):
 
         #count if needed
         if (counter_trigger):
-            lock.acquire()
-            counter.value += 1
-            lock.release()
-            
-            #take the photo to confirm
-            camera.start_preview()
-            sleep(1) # see if it takes photo without delay
-            camera.capture('home/pi/Documents/giulio/ARCoLD/photos/image'+str(time.time())+'.jpg')
-            camera.stop_preview()
-            
-            counter_trigger = False
+			lock.acquire()
+			file_event = open("event_list.txt", "a+")
+			file_event.write(str(time.time()))
+			counter.value += 1
+			file_event.close()
+			lock.release()
+
+			#take the photo to confirm
+			camera.start_preview()
+			sleep(1) # see if it takes photo without delay
+			camera.capture('home/pi/Documents/giulio/ARCoLD/photos/image'+str(time.time())+'.jpg')
+			camera.stop_preview()
+
+			counter_trigger = False
             
 if __name__ == "__main__": 
     #Main process to interact with the program
     counterProcess = 0
     server_socket = 0
     try:
-        # initial counter (in shared memory) 
-        counter = multiprocessing.Value('i', 0)
-        
-        # counter pid (in shared memory)
-        pid = multiprocessing.Value('i', 0)
-        
-        #lock to access counter shared variable
-        lock = multiprocessing.Lock()
-        counterProcess = multiprocessing.Process(target=runCounter, args=(photosensor_pin, lock)) 
-        counterProcess.start()
-        sleep(1)
-        
-        # socket init
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.bind((socket.gethostname(), 3000))
-        server_socket.listen(1)
-        print("Waiting for connection...")
-        # Main loop
-        while True:
+		
+		file_event = 0
+		# initial counter (in shared memory) 
+		counter = multiprocessing.Value('i', 0)
+
+		# counter pid (in shared memory)
+		pid = multiprocessing.Value('i', 0)
+
+		#lock to access counter shared variable
+		lock = multiprocessing.Lock()
+		counterProcess = multiprocessing.Process(target=runCounter, args=(photosensor_pin, lock, file_event)) 
+		counterProcess.start()
+		sleep(1)
+		
+		# socket init
+		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		server_socket.bind((socket.gethostname(), 3000))
+		server_socket.listen(1)
+		print("Waiting for connection...")
+		# Main loop
+		while True:
 			conn, addr = server_socket.accept()
 			print("Connection by "+ str(addr))
 			cmd = ''
 			while True:
 				cmd = conn.recv(128)
-				print(cmd)
-				#cmd = raw_input("Pass a command among \"Count\", \"Suspend\", \"Exit\":\t")
+				print(str(addr) + " >> " + cmd)
 				if (cmd == "Count"):
 					lock.acquire()
 					conn.sendall("Counter value is {0}".format(counter.value))
 					lock.release()
 					cmd = ''
+				elif (cmd == "List"):
+					lock.acquire()
+					file_event = open("event_list.txt", "r+")
+					data = file_event.read()
+					if (data != ""): conn.sendall(data)
+					else: conn.sendall(">>> Empty")
+					lock.release()
+				elif (cmd == "Reset"):
+					lock.acquire()
+					file_event = open("event_list.txt", "w+")
+					file_event.close()
+					counter.value = 0
+					lock.release()
+					conn.sendall("Reset Done!")
 				elif (cmd == "Suspend"):
 					conn.sendall("Closing the connection")
 					#server_socket.close()
@@ -92,10 +111,9 @@ if __name__ == "__main__":
 					sys.exit(0)
 				else:
 					conn.sendall("Cmd not recognized")
-               
+			   
     except KeyboardInterrupt:
         counterProcess.join()
     except TypeError:
 		server_socket.close()
-		
         
