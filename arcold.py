@@ -3,6 +3,7 @@ import RPi.GPIO as GPIO
 from picamera import PiCamera
 import os
 import sys
+from datetime import datetime
 import time
 import socket
 import cPickle as pickle
@@ -12,41 +13,46 @@ from time import sleep
 GPIO.setmode(GPIO.BCM)
 
 #define the pins that goes to the circuit
-photosensor_pin = 7
+photosensor_pin = 4
 
 #process that always checks the state of the photosensor and eventually count
 def runCounter(photosensor_pin, lock, file_event):
-    camera = PiCamera()
+    #camera = PiCamera()
     #update pid value
     lock.acquire()
     pid.value = os.getpid()
     print("Counter process has pid {0}".format(pid.value))
     lock.release()
-    photosensor_pin = 7
+    output_pin = 17
     #setup gpios
     GPIO.setup(photosensor_pin, GPIO.IN)
-                 
+    GPIO.setup(output_pin, GPIO.OUT)
+	
     while True:
-        counter_trigger = True
-        while (GPIO.input(photosensor_pin) == GPIO.LOW): #it should be HIGH
-             continue           
-
+        
+        while (GPIO.input(photosensor_pin) == GPIO.LOW): #it should be HIGH           
+			counter_trigger = True
         #count if needed
-        if (counter_trigger):
-			lock.acquire()
-			file_event = open("event_list.txt", "a+")
-			file_event.write(str(time.time()))
-			counter.value += 1
-			file_event.close()
-			lock.release()
-
-			#take the photo to confirm
-			camera.start_preview()
-			sleep(1) # see if it takes photo without delay
-			camera.capture('home/pi/Documents/giulio/ARCoLD/photos/image'+str(time.time())+'.jpg')
-			camera.stop_preview()
-
-			counter_trigger = False
+        
+        print("Licking event...")
+        lock.acquire()
+        file_event = open("event_list.txt", "a+")
+        start_time = time.time()
+        print(datetime.fromtimestamp(start_time))
+        GPIO.output(output_pin, GPIO.HIGH)
+        file_event.write(str(start_time))
+        counter.value += 1
+        
+        while(GPIO.input(photosensor_pin) == GPIO.HIGH):
+			pass
+		
+        final_time = time.time()
+        print(datetime.fromtimestamp(final_time))
+        file_event.write(str(final_time)+"\n")
+        GPIO.output(output_pin, GPIO.LOW)
+        file_event.close()
+        lock.release()
+        print("OFF")
             
 if __name__ == "__main__": 
     #Main process to interact with the program
@@ -117,3 +123,15 @@ if __name__ == "__main__":
     except TypeError:
 		server_socket.close()
         
+
+		#GPIO.output(output_pin, GPIO.HIGH)
+		#sleep(1)
+		#GPIO.output(output_pin, GPIO.LOW)
+
+		#take the photo to confirm
+		#camera.start_preview()
+		#sleep(1) # see if it takes photo without delay
+		#camera.capture('home/pi/Documents/giulio/ARCoLD/photos/image'+str(time.time())+'.jpg')
+		#camera.stop_preview()
+
+		#counter_trigger = False
