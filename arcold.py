@@ -6,8 +6,8 @@ import sys
 from datetime import datetime
 import time
 import socket
-import cPickle as pickle
 from time import sleep
+from util import send_socket, receive_socket
 
 
 GPIO.setmode(GPIO.BCM)
@@ -24,6 +24,7 @@ def runCounter(photosensor_pin, lock, file_event):
     print("Counter process has pid {0}".format(pid.value))
     lock.release()
     output_pin = 17
+    
     #setup gpios
     GPIO.setup(photosensor_pin, GPIO.IN)
     GPIO.setup(output_pin, GPIO.OUT)
@@ -84,19 +85,18 @@ if __name__ == "__main__":
 			print("Connection by "+ str(addr))
 			cmd = ''
 			while True:
-				cmd = conn.recv(128)
+				cmd = receive_socket(conn)
 				print(str(addr) + " >> " + cmd)
 				if (cmd == "Count"):
 					lock.acquire()
-					conn.sendall("Counter value is {0}".format(counter.value))
+					send_socket(conn, "Counter value is {0}".format(counter.value))
 					lock.release()
-					cmd = ''
 				elif (cmd == "List"):
 					lock.acquire()
 					file_event = open("event_list.txt", "r+")
 					data = file_event.read()
-					if (data != ""): conn.sendall(data)
-					else: conn.sendall(">>> Empty")
+					if (data != ""): send_socket(conn, data)
+					else: send_socket(conn, ">>> Empty")
 					lock.release()
 				elif (cmd == "Reset"):
 					lock.acquire()
@@ -104,19 +104,20 @@ if __name__ == "__main__":
 					file_event.close()
 					counter.value = 0
 					lock.release()
-					conn.sendall("Reset Done!")
+					send_socket(conn, "Reset Done!")
 				elif (cmd == "Suspend"):
-					conn.sendall("Closing the connection")
+					send_socket(conn, "Closing the connection")
 					#server_socket.close()
 					cmd = ''
 					break
 				elif (cmd == "Exit"):
-					conn.sendall("Closing the connection and exiting")
+					send_socket(conn, "Closing the connection and exiting")
 					server_socket.close()
 					counterProcess.terminate()
 					sys.exit(0)
 				else:
-					conn.sendall("Cmd not recognized")
+					send_socket(conn, "Cmd not recognized")
+				cmd = ''
 			   
     except KeyboardInterrupt:
         counterProcess.join()
