@@ -1,13 +1,16 @@
 import socket
+import re
 from util import send_socket, receive_socket
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((socket.gethostname(), 3000))
-MSGLEN = 1024
 
 try:
 	while True:
-		cmd = raw_input("Pass a command among \"Count\", \"Reset\", \"Suspend\",\"List\", \"Exit\":\t")
+		cmd = raw_input("Pass a command (digit \"Help\" to show the list of commands):\t")
+		if ("Prog" in cmd and not re.match("Prog[ \t\n\r\f\v]+-span=[0-9]+\.*[0-9]*", cmd)):
+			print(">>> Not a good Prog")
+			continue
 		send_socket(client_socket, cmd)
 		data = receive_socket(client_socket)
 		print(data)

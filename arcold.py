@@ -7,7 +7,7 @@ from datetime import datetime
 import time
 import socket
 from time import sleep
-from util import send_socket, receive_socket
+from util import send_socket, receive_socket, send_help
 
 
 GPIO.setmode(GPIO.BCM)
@@ -33,6 +33,7 @@ def runCounter(photosensor_pin, lock, file_event):
         
         while (GPIO.input(photosensor_pin) == GPIO.LOW): #it should be HIGH           
 			counter_trigger = True
+			
         #count if needed
         
         print("Licking event...")
@@ -40,8 +41,14 @@ def runCounter(photosensor_pin, lock, file_event):
         file_event = open("event_list.txt", "a+")
         start_time = time.time()
         print(datetime.fromtimestamp(start_time))
-        GPIO.output(output_pin, GPIO.HIGH)
-        file_event.write(str(start_time))
+        if (time_bound.value < start_time):
+			time_bound.value = 0
+			GPIO.output(output_pin, GPIO.HIGH) 
+		
+	else:
+                        print("At "+datetime.fromtimestamp(start_time)+" it tries to lick, but it's blocked")
+			
+        file_event.write(str(datetime.fromtimestamp(start_time)))
         counter.value += 1
         
         while(GPIO.input(photosensor_pin) == GPIO.HIGH):
@@ -49,7 +56,7 @@ def runCounter(photosensor_pin, lock, file_event):
 		
         final_time = time.time()
         print(datetime.fromtimestamp(final_time))
-        file_event.write(str(final_time)+"\n")
+        file_event.write(str(datetime.fromtimestamp(final_time))+"\n")
         GPIO.output(output_pin, GPIO.LOW)
         file_event.close()
         lock.release()
@@ -67,7 +74,9 @@ if __name__ == "__main__":
 
 		# counter pid (in shared memory)
 		pid = multiprocessing.Value('i', 0)
-
+		# number of hours where the 
+		time_bound = multiprocessing.Value('d', 0)
+		
 		#lock to access counter shared variable
 		lock = multiprocessing.Lock()
 		counterProcess = multiprocessing.Process(target=runCounter, args=(photosensor_pin, lock, file_event)) 
@@ -89,7 +98,7 @@ if __name__ == "__main__":
 				print(str(addr) + " >> " + cmd)
 				if (cmd == "Count"):
 					lock.acquire()
-					send_socket(conn, "Counter value is {0}".format(counter.value))
+					send_socket(conn, "- Counter value is {0}.\n- The mice can drink? {1}!".format(counter.value, not time_bound.value > 0))
 					lock.release()
 				elif (cmd == "List"):
 					lock.acquire()
@@ -98,6 +107,14 @@ if __name__ == "__main__":
 					if (data != ""): send_socket(conn, data)
 					else: send_socket(conn, ">>> Empty")
 					lock.release()
+				elif (cmd == "Remove"):
+					time_bound.value = 0
+					send_socket(conn, "\"Prog\" removed")
+				elif ("Prog" in cmd):
+					sec_span = (int(cmd.split("-span=")[1])+1) * 3600
+					time_bound.value = time.time()+sec_span
+					bound = datetime.fromtimestamp(time_bound.value)
+					send_socket(conn, "Command \"Prog\" received: it won't drink until "+str(bound))
 				elif (cmd == "Reset"):
 					lock.acquire()
 					file_event = open("event_list.txt", "w+")
@@ -115,12 +132,15 @@ if __name__ == "__main__":
 					server_socket.close()
 					counterProcess.terminate()
 					sys.exit(0)
+				elif(cmd =="Help"):
+					send_help(conn)
 				else:
 					send_socket(conn, "Cmd not recognized")
 				cmd = ''
 			   
     except KeyboardInterrupt:
         counterProcess.join()
+        server_socket.close()
     except TypeError:
 		server_socket.close()
         
