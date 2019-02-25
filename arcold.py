@@ -17,7 +17,7 @@ photosensor_pin = 4
 
 #process that always checks the state of the photosensor and eventually count
 def runCounter(photosensor_pin, lock, file_event):
-    #camera = PiCamera()
+    camera = PiCamera()
     #update pid value
     lock.acquire()
     pid.value = os.getpid()
@@ -40,13 +40,19 @@ def runCounter(photosensor_pin, lock, file_event):
         lock.acquire()
         file_event = open("event_list.txt", "a+")
         start_time = time.time()
+        
+        camera.start_preview()
+        #sleep(1) # see if it takes photo without delay
+        camera.capture('photos/image/'+str(datetime.fromtimestamp(start_time))+'.jpg')
+        camera.stop_preview()
+        
         print(datetime.fromtimestamp(start_time))
         if (time_bound.value < start_time):
 			time_bound.value = 0
 			GPIO.output(output_pin, GPIO.HIGH) 
 		
 	else:
-                        print("At "+datetime.fromtimestamp(start_time)+" it tries to lick, but it's blocked")
+                        print("At "+str(datetime.fromtimestamp(start_time))+" it tries to lick, but it's blocked")
 			
         file_event.write(str(datetime.fromtimestamp(start_time)))
         counter.value += 1
@@ -143,6 +149,8 @@ if __name__ == "__main__":
         server_socket.close()
     except TypeError:
 		server_socket.close()
+    finally:
+		GPIO.cleanup(17)
         
 
 		#GPIO.output(output_pin, GPIO.HIGH)
