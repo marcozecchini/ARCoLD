@@ -1,6 +1,7 @@
 import multiprocessing 
 import RPi.GPIO as GPIO
 from picamera import PiCamera
+from flask import Flask
 import os
 import sys
 from datetime import datetime
@@ -11,6 +12,7 @@ from util import send_socket, receive_socket, send_help
 
 
 GPIO.setmode(GPIO.BCM)
+app = Flask(__name__)
 
 #define the pins that goes to the circuit
 photosensor_pin = 4
@@ -67,7 +69,8 @@ def runCounter(photosensor_pin, lock, file_event):
         file_event.close()
         lock.release()
         print("OFF")
-            
+
+
 if __name__ == "__main__": 
     #Main process to interact with the program
     counterProcess = 0
@@ -151,16 +154,3 @@ if __name__ == "__main__":
 		server_socket.close()
     finally:
 		GPIO.cleanup(17)
-        
-
-		#GPIO.output(output_pin, GPIO.HIGH)
-		#sleep(1)
-		#GPIO.output(output_pin, GPIO.LOW)
-
-		#take the photo to confirm
-		#camera.start_preview()
-		#sleep(1) # see if it takes photo without delay
-		#camera.capture('home/pi/Documents/giulio/ARCoLD/photos/image'+str(time.time())+'.jpg')
-		#camera.stop_preview()
-
-		#counter_trigger = False
