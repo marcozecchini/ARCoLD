@@ -1,0 +1,23 @@
+{% extends 'arcold/base.html' %}
+
+{% block header %}
+  <h1>{% block title %}ARCoLD{% endblock %}</h1>
+{% endblock %}
+
+
+{% block content %}
+    <article class="post">
+      <header>
+        <div>
+          <h1>{{cage['id']}}</h1>
+          <div class="about">named {{ cage['name'] }}</div>
+           <div class="body">
+                   <ul>
+                        <li>Counter has value:  {{ counter }}</li>
+                   </ul>
+
+           </div>
+        </div>
+      </header>
+    </article>
+{% endblock %}

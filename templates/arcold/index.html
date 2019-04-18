@@ -1,0 +1,24 @@
+{% extends 'arcold/base.html' %}
+{% block title %}Arcold{% endblock %}
+{% block header %}
+  <h1>List of cages</h1>
+{% endblock %}
+
+
+{% block content %}
+  {% for cage in cages %}
+    <article class="post">
+      <header>
+        <div>
+          <h1>{{ cage['name'] }}</h1>
+          <div class="about">with id: {{ cage['id'] }} </div>
+        </div>
+          <a class="action" href="{{ url_for('cage_details', id=cage['id']) }}">See it!</a>
+
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}
