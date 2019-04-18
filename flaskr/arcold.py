@@ -1,6 +1,6 @@
 from flask import (Blueprint, flash, g, redirect, render_template, request, url_for)
 from werkzeug.exceptions import abort
-from flaskr.db import get_db
+from flaskr.db import *
 
 bp = Blueprint('arcold', __name__)
 
@@ -31,7 +31,6 @@ def get_cage(id):
 def cage_details(id):
 	cage = get_cage(id)
 	
-	if request.method == 'POST':
-		pass
+	counter = licking_event_selection_counter(id)
 	
-	return render_template('cage.html', cage=cage)
+	return render_template('cage.html', cage=cage, counter=counter)

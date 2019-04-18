@@ -67,3 +67,13 @@ def insert_program_events(start_time, final_time, cage_id):
 	conn.commit()
 	conn.close()
 
+def licking_event_selection_counter(id):
+	from datetime import datetime
+	conn = sqlite3.connect('arcold.db')
+	cursor = conn.cursor()
+	day_ago = datetime.now().timestamp() - 3600*24
+	
+	cursor.execute(''' SELECT count * FROM licking_events l WHERE l.final_time > {0} AND  l.cage_id == {1}'''.format(day_ago, id))
+	res = cursor.fetchone()
+	conn.close()
+	return res

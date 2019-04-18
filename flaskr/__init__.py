@@ -2,6 +2,14 @@ import os
 
 from flask import Flask
 
+'''
+To launch it:
+
+export FLASK_APP=flaskr
+export FLASK_ENV=development
+flask run
+'''
+
 def create_app(test_config=None):
 	#create and configure the app
 	app = Flask(__name__, instance_relative_config=True)
