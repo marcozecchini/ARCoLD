@@ -1,9 +1,11 @@
 from util import *
 from time import sleep
 import sys
-#import RPi.GPIO as GPIO
-#from picamera import PiCamera
+import time
+import RPi.GPIO as GPIO
+from picamera import PiCamera
 
+GPIO.setmode(GPIO.BCM)
 cage_name = sys.argv[1]
 cage_id = 0
 server = "Server"
@@ -15,49 +17,49 @@ next_prog = []
 '''
 def runCounter():
 
-    # camera = PiCamera()
+    #camera = PiCamera()
 
     # pins that powers the pump
     output_pin = 17
     # define the pins that goes to the circuit
     photosensor_pin = 4
-
+    
     # setup gpios
-    # GPIO.setup(photosensor_pin, GPIO.IN)
-    # GPIO.setup(output_pin, GPIO.OUT)
+    GPIO.setup(photosensor_pin, GPIO.IN)
+    GPIO.setup(output_pin, GPIO.OUT)
+   
     while True:
         from datetime import datetime
 
-        # while (GPIO.input(photosensor_pin) == GPIO.LOW): #it should be HIGH
-        #    counter_trigger = True
+        while (GPIO.input(photosensor_pin) == GPIO.LOW): #it should be HIGH
+           counter_trigger = True
 
         # count if needed
 
         print("Licking event...")
-        start_time = datetime.now().timestamp()
+        start_time = time.time() + 3600
 
-        # camera.start_preview()
-        # sleep(1) # see if it takes photo without delay
-        # camera.capture('photos/image/'+str(datetime.fromtimestamp(start_time))+'.jpg')
-        # camera.stop_preview()
+        #camera.start_preview()
+        #sleep(1) # see if it takes photo without delay
+        #camera.capture('photos/image/'+str(datetime.fromtimestamp(start_time))+'.jpg')
+        #camera.stop_preview()
 
         print(datetime.fromtimestamp(start_time))
         if (available()):
-            pass
-            # GPIO.output(output_pin, GPIO.HIGH)
+            GPIO.output(output_pin, GPIO.HIGH)
         else:
             print("At " + str(datetime.fromtimestamp(start_time)) + " it tries to lick, but it's blocked")
 
-        # while(GPIO.input(photosensor_pin) == GPIO.HIGH):
-        #    pass
+        while(GPIO.input(photosensor_pin) == GPIO.HIGH):
+           pass
 
-        final_time = datetime.now().timestamp()
+        final_time = time.time() + 3600
         print(datetime.fromtimestamp(final_time))
 
         # send to the db
-        #send_licking_event(start_time, final_time)
+        send_licking_event(start_time, final_time)
 
-        # GPIO.output(output_pin, GPIO.LOW)
+        GPIO.output(output_pin, GPIO.LOW)
         print("OFF")
 
 
@@ -92,4 +94,4 @@ if __name__ == '__main__':
         runCounter()
 
     except:
-        disconnect_client()
+        disconnect_client(client)

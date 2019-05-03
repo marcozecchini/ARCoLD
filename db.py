@@ -85,9 +85,10 @@ def insert_program_events(start_time, final_time, cage_id):
 
 def licking_event_selection_counter(id):
     from datetime import datetime
+    import time
     conn = sqlite3.connect('arcold.db')
     cursor = conn.cursor()
-    day_ago = datetime.now().timestamp() - 3600 * 24
+    day_ago = time.time() - 3600 * 24
 
     cursor.execute(
         ''' SELECT count(*) FROM licking_events WHERE licking_events.final_time > {0} AND  licking_events.cage_id == {1}'''.format(day_ago, id))
@@ -97,10 +98,10 @@ def licking_event_selection_counter(id):
 
 
 def licking_event_selection(id):
-    from datetime import datetime
+    import time
     conn = sqlite3.connect('arcold.db')
     cursor = conn.cursor()
-    day_ago = datetime.now().timestamp() - 3600 * 24
+    day_ago = time.time() - 3600 * 24
 
     cursor.execute(
         ''' SELECT * FROM licking_events WHERE licking_events.final_time > {0} AND  licking_events.cage_id == {1}'''.format(day_ago, id))
@@ -110,10 +111,11 @@ def licking_event_selection(id):
 
 def cant_drink(id):
     from datetime import datetime
+    import time
     conn = sqlite3.connect('arcold.db')
     cursor = conn.cursor()
-    now = datetime.now().timestamp()
-
+    now = time.time() + 3600
+    
     cursor.execute(
         ''' SELECT * FROM program_events WHERE program_events.datetime_end > {0} AND program_events.datetime_start < {0} AND  program_events.cage_id == {1}'''.format(now, id))
     res = cursor.fetchone()

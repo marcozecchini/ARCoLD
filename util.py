@@ -16,7 +16,7 @@ def connect_client(name_client):
 def send_message(client, client_dest, msg):
     client.publish("arcold/"+client_dest, msg)
 
-def disconnect_client():
+def disconnect_client(client):
     client.loop_stop()
 
 def on_message(client, userdata, message):
@@ -65,7 +65,7 @@ def compute_timestamp(start_str):
     temp = start_str.split(",")
     dates = temp[0].split("/")
     hours = temp[1].split(":")
-    start = datetime(year=int(dates[2]), month=int(dates[1]), day=int(dates[0]), hour=int(hours[0]), minute=int(hours[1])).timestamp()
+    start = (datetime(year=int(dates[2]), month=int(dates[1]), day=int(dates[0]), hour=int(hours[0]), minute=int(hours[1])) - datetime.fromtimestamp(0)).total_seconds()
     return start
 
 def send_prog_event(client, start, end):

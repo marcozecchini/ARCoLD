@@ -62,9 +62,8 @@ def cage_details(id):
 
 
 if __name__ == '__main__':
-    #send_message(client, "Server", "Ciao")
+    send_message(client, "Server", "Ciao")
     #counterProcess = multiprocessing.Process(target=runCounter, args=(photosensor_pin, lock))
     #counterProcess.start()
     sleep(1)
     app.run()
-    look_for_cage("first")
