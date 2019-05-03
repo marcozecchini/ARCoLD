@@ -1,7 +1,9 @@
 {% extends 'arcold/base.html' %}
 
+{% block title %}ARCoLD{% endblock %}
+
 {% block header %}
-  <h1>{% block title %}ARCoLD{% endblock %}</h1>
+  <h1>Cage details</h1>
 {% endblock %}
 
 
@@ -9,15 +11,57 @@
     <article class="post">
       <header>
         <div>
-          <h1>{{cage['id']}}</h1>
-          <div class="about">named {{ cage['name'] }}</div>
-           <div class="body">
-                   <ul>
-                        <li>Counter has value:  {{ counter }}</li>
-                   </ul>
-
-           </div>
+          <h1>Counter</h1>
+          <div class="about">Cage named {{ cage['name'] }} with id {{cage['id']}}</div>
         </div>
       </header>
+      <div class="body">
+          <hr>
+          <i>Counter has value:</i> {{ counter[0] }} <br>
+          <hr>
+          Last five lick events:
+          <ul>
+              {% for event in list_licks %}
+                  <li><b>From</b> {{ event[0] }} <b>to</b> {{ event[1] }}</li>
+              {% endfor %}
+          </ul>
+      </div>
     </article>
+    <article class="post">
+      <header>
+          <div>
+            <h1>Program next hours</h1>
+            <div class="about">
+                {{ event }}
+            </div>
+          </div>
+      </header>
+
+      {% from 'arcold/_formhelpers.html' import render_field %}
+          <form method="POST">
+              <dl>
+                  {{ render_field(form.start_time) }}
+                  {{ render_field(form.final_time) }}
+                  <dd><input type="submit" value="Program"></dd>
+              </dl>
+
+          </form>
+    </article>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+  <script type="text/javascript">
+    $(function () {
+        $('#{{ form.start_time.id }}').datetimepicker(
+            {format: 'DD/MM/YYYY,HH:mm'}
+        );
+      });
+  </script>
+  <script type="text/javascript">
+    $(function () {
+        $('#{{ form.final_time.id }}').datetimepicker(
+            {format: 'DD/MM/YYYY,HH:mm'}
+            );
+      });
+  </script>
 {% endblock %}

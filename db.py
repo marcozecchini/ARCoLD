@@ -2,6 +2,7 @@ import sqlite3
 import multiprocessing
 import click
 from flask import current_app, g, Flask
+from werkzeug.exceptions import abort
 from flask.cli import with_appcontext
 
 app = Flask(__name__)
@@ -50,7 +51,7 @@ def insert_cage(name):
     conn = sqlite3.connect('arcold.db')
     cursor = conn.cursor()
 
-    cursor.executescript('''INSERT INTO cages VALUES ({0}, {1})'''.format(cage_id.value, name))
+    cursor.executescript('''INSERT INTO cages(name) VALUES ({0})'''.format(name))
     cage_id.value += 1
     conn.commit()
     conn.close()
@@ -62,7 +63,7 @@ def insert_licking_events(start_time, final_time, cage_id):
     cursor = conn.cursor()
 
     cursor.executescript(
-        '''INSERT INTO licking_events VALUES ({0}, {1}, {2}, {3})'''.format(lick_id.value, start_time, final_time,
+        '''INSERT INTO licking_events(start_time, final_time, cage_id) VALUES ({0}, {1}, {2})'''.format(start_time, final_time,
                                                                             cage_id))
     lick_id.value += 1
     conn.commit()
@@ -75,7 +76,7 @@ def insert_program_events(start_time, final_time, cage_id):
     cursor = conn.cursor()
 
     cursor.executescript(
-        '''INSERT INTO program_events VALUES ({0}, {1}, {2}, {3})'''.format(prog_id.value, start_time, final_time,
+        '''INSERT INTO program_events(datetime_start, datetime_end, cage_id) VALUES ({0}, {1}, {2})'''.format(start_time, final_time,
                                                                             cage_id))
     prog_id.value += 1
     conn.commit()
@@ -93,3 +94,60 @@ def licking_event_selection_counter(id):
     res = cursor.fetchone()
     conn.close()
     return res
+
+
+def licking_event_selection(id):
+    from datetime import datetime
+    conn = sqlite3.connect('arcold.db')
+    cursor = conn.cursor()
+    day_ago = datetime.now().timestamp() - 3600 * 24
+
+    cursor.execute(
+        ''' SELECT * FROM licking_events WHERE licking_events.final_time > {0} AND  licking_events.cage_id == {1}'''.format(day_ago, id))
+    res = cursor.fetchall()
+    conn.close()
+    return res
+
+def cant_drink(id):
+    from datetime import datetime
+    conn = sqlite3.connect('arcold.db')
+    cursor = conn.cursor()
+    now = datetime.now().timestamp()
+
+    cursor.execute(
+        ''' SELECT * FROM program_events WHERE program_events.datetime_end > {0} AND program_events.datetime_start < {0} AND  program_events.cage_id == {1}'''.format(now, id))
+    res = cursor.fetchone()
+    conn.close()
+    return res, len(res) > 0 if res is not None else False
+
+def get_cage(id):
+    from datetime import datetime
+    cage = get_db().execute(
+        '''SELECT * FROM cages WHERE id={0}'''.format(id)
+    ).fetchone()
+    if cage is None:
+        abort(404, "Cage id {0} doesn't exist.".format(id))
+
+    return cage
+
+def get_next_prog(cage_id):
+    prog_event = get_db().execute(
+        '''SELECT * FROM licking_events WHERE cage_id={0} ORDER BY start_time'''.format(cage_id)
+    ).fetchall()
+
+    if prog_event is None:
+        return None
+
+    return prog_event
+
+def look_for_cage(name):
+    cages = get_db().execute(
+        '''SELECT * FROM cages '''
+    ).fetchall()
+
+    for cage in cages:
+        if cage[1] == name:
+            return cage[0]
+
+    insert_cage(name)
+    return cage_id.value

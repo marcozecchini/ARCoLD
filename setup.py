@@ -9,5 +9,7 @@ setup(
     install_requirements=[
         'flask',
         'multiprocessing',
+        'Flask-WTF',
+        'paho-mqtt',
      ],
 )
