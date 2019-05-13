@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 from db import look_for_cage, insert_licking_events
 #broker address
-BROKER_ADDR = "10.58.20.50"
+BROKER_ADDR = "128.40.51.144"
 client = None
 
 def connect_client(name_client):
@@ -21,10 +21,11 @@ def disconnect_client(client):
 
 def on_message(client, userdata, message):
     print("On "+ message.topic + ": ["+ str(client._client_id)+"]-> "  +  str(message.payload))
-    pars = message.split(" ")
-
+    pars = message.payload.split(" ")
     if "active" in pars[0]:
+        print("In active")
         id = look_for_cage(pars[1])
+        print(id)
         send_message(client, pars[1], "confirm {0}".format(id))
 
     elif "lick" in pars[0]:
@@ -34,7 +35,7 @@ def on_message(client, userdata, message):
 
 def on_message_client(client_instance, userdata, message):
     print("On " + message.topic + ": [" + str(client_instance._client_id) + "]-> " + str(message.payload))
-    pars = message.split(" ")
+    pars = message.payload.split(" ")
 
     if "prog" in pars[0]:
         try:
@@ -69,4 +70,4 @@ def compute_timestamp(start_str):
     return start
 
 def send_prog_event(client, start, end):
-    send_message(client, "Server", "next")
+    send_message(client, "Server", "next {0} {1}".format(start, end))

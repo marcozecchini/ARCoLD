@@ -146,7 +146,7 @@ def look_for_cage(name):
     cages = get_db().execute(
         '''SELECT * FROM cages '''
     ).fetchall()
-
+    
     for cage in cages:
         if cage[1] == name:
             return cage[0]

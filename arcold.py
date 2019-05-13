@@ -66,4 +66,4 @@ if __name__ == '__main__':
     #counterProcess = multiprocessing.Process(target=runCounter, args=(photosensor_pin, lock))
     #counterProcess.start()
     sleep(1)
-    app.run()
+    app.run(host='0.0.0.0')

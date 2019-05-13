@@ -7,7 +7,7 @@ from picamera import PiCamera
 
 GPIO.setmode(GPIO.BCM)
 cage_name = sys.argv[1]
-cage_id = 0
+cage_id = 1
 server = "Server"
 client = connect_client(cage_name)
 next_prog = []
@@ -68,7 +68,7 @@ def runCounter():
 '''
 def available():
     from datetime import datetime
-    now = datetime.now().timestamp()
+    now = time.time() + 3600
     for couple in next_prog:
         try:
             if  float(couple[1]) < now:
@@ -93,5 +93,6 @@ if __name__ == '__main__':
         sleep(1)
         runCounter()
 
-    except:
+    except Exception as e:
+        print(e)
         disconnect_client(client)
