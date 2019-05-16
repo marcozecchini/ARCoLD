@@ -41,7 +41,10 @@ def cage_details(id):
         insert_program_events(start, final, id)
 
         #send message to the next cage
-        send_message(client, cage[1], "next {0} {1}".format(start, final))
+        print("Sending the message to "+cage[1])
+        
+        send_prog_event(client, cage[1], start, final)
+        #send_message(client, cage[1], "next {0} {1}".format(start, final))
 
     #select licking_events
     counter = licking_event_selection_counter(id)

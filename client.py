@@ -5,12 +5,58 @@ import time
 import RPi.GPIO as GPIO
 from picamera import PiCamera
 
+
 GPIO.setmode(GPIO.BCM)
 cage_name = sys.argv[1]
-cage_id = 1
-server = "Server"
-client = connect_client(cage_name)
+cage_id = 0
 next_prog = []
+
+
+def connect_client_side(name_client):
+    client = mqtt.Client(name_client)
+    client.on_message = on_message_client
+    client.connect(BROKER_ADDR)
+
+    client.loop_start()
+    client.subscribe("arcold/"+name_client)
+    return client
+
+def on_message_client(client_instance, userdata, message):
+    print("On " + message.topic + ": [" + str(client_instance._client_id) + "]-> " + str(message.payload))
+    pars = message.payload.split(" ")
+    global next_prog
+    if "prog" in pars[0]:
+        try:
+            
+            i = 1
+            while i < len(pars):
+                #print(pars[i+1]) #TODO non funziona benissimo questo
+                next_prog += [[ float(pars[i]), float(pars[i+1]) ]]
+                i += 2
+        except Exception as e:
+            print("--> Something wrong in the pass of data")
+            print(e);
+
+    elif "next" in pars[0]:
+        try:
+            #print(pars[2]);
+            next_prog += [[ float(pars[1]), float(pars[2]) ]]
+            #print(next_prog)
+            
+        except Exception as e:
+            print("--> Something wrong in passing data from 'next' command: "+e)
+
+    elif "confirm" in pars[0]:
+        try:
+            
+            cage_id = int(pars[1])
+        except:
+            print("--> Something wrong in passing data from 'confirm' command")
+
+
+server = "Server"
+BROKER_ADDR = "128.40.51.144"
+client = connect_client_side(cage_name)
 
 '''
     Main loop functions
@@ -27,9 +73,11 @@ def runCounter():
     # setup gpios
     GPIO.setup(photosensor_pin, GPIO.IN)
     GPIO.setup(output_pin, GPIO.OUT)
-   
+    sleep(5)
+
     while True:
         from datetime import datetime
+        #todo : next test with next e programmazione
 
         while (GPIO.input(photosensor_pin) == GPIO.LOW): #it should be HIGH
            counter_trigger = True
@@ -61,6 +109,7 @@ def runCounter():
 
         GPIO.output(output_pin, GPIO.LOW)
         print("OFF")
+        sleep(1000000)
 
 
 '''
@@ -69,7 +118,9 @@ def runCounter():
 def available():
     from datetime import datetime
     now = time.time() + 3600
+    #print(next_prog)
     for couple in next_prog:
+        #print(couple)
         try:
             if  float(couple[1]) < now:
                 next_prog.remove([couple[0], couple[1]])

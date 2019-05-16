@@ -106,6 +106,7 @@ def licking_event_selection(id):
     cursor.execute(
         ''' SELECT * FROM licking_events WHERE licking_events.final_time > {0} AND  licking_events.cage_id == {1}'''.format(day_ago, id))
     res = cursor.fetchall()
+    print(res)
     conn.close()
     return res
 
@@ -124,7 +125,11 @@ def cant_drink(id):
 
 def get_cage(id):
     from datetime import datetime
-    cage = get_db().execute(
+    
+    conn = sqlite3.connect('arcold.db')
+    cursor = conn.cursor()
+    
+    cage = cursor.execute(
         '''SELECT * FROM cages WHERE id={0}'''.format(id)
     ).fetchone()
     if cage is None:
@@ -133,8 +138,12 @@ def get_cage(id):
     return cage
 
 def get_next_prog(cage_id):
-    prog_event = get_db().execute(
-        '''SELECT * FROM licking_events WHERE cage_id={0} ORDER BY start_time'''.format(cage_id)
+    import time
+    conn = sqlite3.connect('arcold.db')
+    cursor = conn.cursor()
+    now = time.time() + 3600
+    prog_event = cursor.execute(
+        '''SELECT * FROM program_events WHERE cage_id={0} AND datetime_end > {1} ORDER BY datetime_start'''.format(cage_id, now)
     ).fetchall()
 
     if prog_event is None:
@@ -143,7 +152,10 @@ def get_next_prog(cage_id):
     return prog_event
 
 def look_for_cage(name):
-    cages = get_db().execute(
+    conn = sqlite3.connect('arcold.db')
+    cursor = conn.cursor()
+    
+    cages = cursor.execute(
         '''SELECT * FROM cages '''
     ).fetchall()
     
