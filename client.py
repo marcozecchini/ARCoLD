@@ -48,10 +48,12 @@ def on_message_client(client_instance, userdata, message):
 
     elif "confirm" in pars[0]:
         try:
-            
+            global cage_id
             cage_id = int(pars[1])
-        except:
+        except Exception as e:
             print("--> Something wrong in passing data from 'confirm' command")
+            print(e)
+        print(cage_id)
 
 
 server = "Server"
@@ -77,7 +79,7 @@ def runCounter():
 
     while True:
         from datetime import datetime
-        #todo : next test with next e programmazione
+        
 
         while (GPIO.input(photosensor_pin) == GPIO.LOW): #it should be HIGH
            counter_trigger = True
@@ -109,7 +111,7 @@ def runCounter():
 
         GPIO.output(output_pin, GPIO.LOW)
         print("OFF")
-        sleep(1000000)
+        
 
 
 '''
